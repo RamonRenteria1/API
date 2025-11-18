@@ -1,31 +1,41 @@
-from flask import Flask, render_template, request
-from fatsecret import Fatsecret
+from flask import Flask, render_template, request, redirect, url_for, flash
+import requests
 
 app = Flask(__name__)
+app.secret_key = "124123131221"   
 
 
-FATSECRET_KEY = "653860841f8c43469c1852dd637e626f"
-FATSECRET_SECRET = "1300580db1184d99b12feb836da6526d"
+@app.route("/", methods=["GET", "POST"])
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    resultados = None
 
+    if request.method == "POST":
+        buscar = request.form.get("buscar")
 
-fatsecret = Fatsecret(FATSECRET_KEY, FATSECRET_SECRET)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/search_food', methods=['POST'])
-def search_food():
-    query = request.form.get('query')
-    if not query:
-        return render_template('index.html', error="Por favor ingresa un alimento.")
-
-    try:
         
-        foods = fatsecret.foods_search(query, max_results=5)
-        return render_template('results.html', foods=foods, query=query)
-    except Exception as e:
-        return render_template('index.html', error=f"Error: {str(e)}")
+        if not buscar:
+            flash(" Debes escribir un alimento para buscar.", "warning")
+            return redirect(url_for("search"))
 
-if __name__ == '__main__':
+       
+        url = f"https://world.openfoodfacts.org/cgi/search.pl?search_terms={buscar}&search_simple=1&action=process&json=1"
+
+        try:
+            resp = requests.get(url)
+            data = resp.json()
+        except Exception:
+            flash(" Error al conectar con la API.", "danger")
+            return redirect(url_for("search"))
+
+        
+        if "products" in data and len(data["products"]) > 0:
+            resultados = data["products"]
+        else:
+            flash(" No se encontraron resultados.", "danger")
+
+    return render_template("search.html", resultados=resultados)
+
+
+if __name__ == "__main__":
     app.run(debug=True)

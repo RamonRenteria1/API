@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for categoria, mensaje in messages %}
+                <div class="alert alert-{{ categoria }} mt-2">{{ mensaje }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2 class="text-center mb-4">Buscar alimento</h2>
+
+    <form method="POST" action="{{ url_for('search') }}">
+        <div class="input-group mb-4">
+            <input type="text" class="form-control" name="buscar" placeholder="Ejemplo: arroz, leche, huevo...">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    {% if resultados %}
+        <h3 class="mb-3">Resultados:</h3>
+
+        <div class="row">
+            {% for producto in resultados %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+
+                        {% if producto.image_small_url %}
+                        <img src="{{ producto.image_small_url }}" class="card-img-top" alt="imagen">
+                        {% endif %}
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">{{ producto.product_name or "Sin nombre" }}</h5>
+
+                            <p><strong>Marca:</strong> {{ producto.brands or "No disponible" }}</p>
+                            <p><strong>Cantidad:</strong> {{ producto.quantity or "No disponible" }}</p>
+
+                            {% if producto.nutriments %}
+                                <hr>
+                                <h6>Información nutricional (por 100g):</h6>
+
+                                <p><strong>Calorías:</strong> 
+                                    {{ producto.nutriments.energy_kcal_100g or "No disponible" }} kcal</p>
+
+                                <p><strong>Grasa total:</strong> 
+                                    {{ producto.nutriments.fat_100g or "No disponible" }} g</p>
+
+                                <p><strong>Carbohidratos:</strong> 
+                                    {{ producto.nutriments.carbohydrates_100g or "No disponible" }} g</p>
+
+                                <p><strong>Azúcares:</strong> 
+                                    {{ producto.nutriments.sugars_100g or "No disponible" }} g</p>
+
+                                <p><strong>Proteínas:</strong> 
+                                    {{ producto.nutriments.proteins_100g or "No disponible" }} g</p>
+
+                            {% endif %}
+
+                            {% if producto.nutriscore_grade %}
+                                <p><strong>Nutriscore:</strong> {{ producto.nutriscore_grade | upper }}</p>
+                            {% endif %}
+
+                            {% if producto.ingredients_text %}
+                                <hr>
+                                <p><strong>Ingredientes:</strong><br>
+                                    {{ producto.ingredients_text }}</p>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
